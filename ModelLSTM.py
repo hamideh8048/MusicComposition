@@ -14,7 +14,7 @@ from keras.utils import np_utils
 
 
 def get_notes():
-    """ Get all the notes and chords from the midi files """
+    ####################################نت ها از فایل midi  خوانده می شوند #################################
     notes = []
 
     for file in glob.glob("Pokemon MIDIs/*.mid"):
@@ -40,19 +40,20 @@ def get_notes():
 
 
 def prepare_sequences(notes, n_vocab):
-    """ Prepare the sequences used by the Neural Network """
+    ####################################ساخت دنباله برای ورودی و خروجی مدل #################################
     sequence_length = 100
 
     # Get all pitch names
     pitchnames = sorted(set(item for item in notes))
 
-    # Create a dictionary to map pitches to integers
+    ####################################دیکشنری برای map کردن گام نت به int #################################
     note_to_int = dict((note, number) for number, note in enumerate(pitchnames))
 
     network_input = []
     network_output = []
 
-    # create input sequences and the corresponding outputs
+    ####################################تولید دنباله ورودی .به ازای هر دنباله ورودی یک نت خروجی داریم که در یک آرایه ذخیره میکنیم #################################
+
     for i in range(0, len(notes) - sequence_length, 1):
         sequence_in = notes[i:i + sequence_length]
         sequence_out = notes[i + sequence_length]
@@ -61,10 +62,10 @@ def prepare_sequences(notes, n_vocab):
 
     n_patterns = len(network_input)
 
-    # Reshape the input into a format compatible with LSTM layers
+    ####################################تغییر ورودی به فرمتی که برای lstm قابل قبول باشد #################################
     network_input = np.reshape(network_input, (n_patterns, sequence_length, 1))
 
-    # Normalize input between -1 and 1
+    ####################################نرمال کردن ورودی بین -1 و1 #################################
     network_input = (network_input - float(n_vocab) / 2) / (float(n_vocab) / 2)
     network_output = np_utils.to_categorical(network_output)
 
@@ -218,42 +219,42 @@ class GAN():
 
         # Training the model
         for epoch in range(epochs+1):
-            # for batch in range(batch_size):
-            noise = np.random.normal(0, 1, (half_batch, 100))
-            fake_images = self.generator.predict(noise)
-            fake_labels = np.zeros((half_batch, 1))
-            real_labels = np.ones((half_batch, 1))
-            # Training the discriminator
-            # Select a random batch of note sequences
-            idx = np.random.randint(0, X_train.shape[0], half_batch)
-            real_images = X_train[idx]
+            for batch in range(batch_size):
+                noise = np.random.normal(0, 1, (half_batch, 100))
+                fake_images = self.generator.predict(noise)
+                fake_labels = np.zeros((half_batch, 1))
+                real_labels = np.ones((half_batch, 1))
+                # Training the discriminator
+                # Select a random batch of note sequences
+                idx = np.random.randint(0, X_train.shape[0], half_batch)
+                real_images = X_train[idx]
 
-            # noise = np.random.choice(range(484), (batch_size, self.latent_dim))
-            # noise = (noise-242)/242
+                # noise = np.random.choice(range(484), (batch_size, self.latent_dim))
+                # noise = (noise-242)/242
 
-            # Generate a batch of new note sequences
+                # Generate a batch of new note sequences
 
-            # Train the discriminator
+                # Train the discriminator
 
-            d_loss_real = self.discriminator.train_on_batch(real_images, real_labels)
-            d_loss_fake = self.discriminator.train_on_batch(fake_images, fake_labels)
-            d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
+                d_loss_real = self.discriminator.train_on_batch(real_images, real_labels)
+                d_loss_fake = self.discriminator.train_on_batch(fake_images, fake_labels)
+                d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
 
-            #  Training the Generator
+                #  Training the Generator
 
-            noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
-            # Train the generator (to have the discriminator label samples as real)
-            # g_loss = self.combined.train_on_batch(noise, real)
-            g_loss = self.combined.train_on_batch(noise, np.ones((batch_size, 1)))
-            # Print the progress and save into loss lists
-            # if epoch % sample_interval == 0:
-            #     print("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, d_loss[0], 100 * d_loss[1], g_loss))
-            #     self.disc_loss.append(d_loss[0])
-            #     self.gen_loss.append(g_loss)
-            # print("Epoch %d Batch %d/%d [D loss: %f, acc.: %.2f%%] [G loss:% f]" %
-            # (epoch, batch, batch_size, d_loss[0], 100 * d_loss[1], g_loss))
-            print("Epoch %d Batch %d [D loss: %f, acc.: %.2f%%] [G loss:% f]" %
-            (epoch, batch_size, d_loss[0], 100 * d_loss[1], g_loss))
+                noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
+                # Train the generator (to have the discriminator label samples as real)
+                # g_loss = self.combined.train_on_batch(noise, real)
+                g_loss = self.combined.train_on_batch(noise, np.ones((batch_size, 1)))
+                # Print the progress and save into loss lists
+                # if epoch % sample_interval == 0:
+                #     print("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, d_loss[0], 100 * d_loss[1], g_loss))
+                #     self.disc_loss.append(d_loss[0])
+                #     self.gen_loss.append(g_loss)
+                print("Epoch %d Batch %d/%d [D loss: %f, acc.: %.2f%%] [G loss:% f]" %
+                (epoch, batch, batch_size, d_loss[0], 100 * d_loss[1], g_loss))
+                # print("Epoch %d Batch %d [D loss: %f, acc.: %.2f%%] [G loss:% f]" %
+                # (epoch, batch_size, d_loss[0], 100 * d_loss[1], g_loss))
 
         self.generate(notes)
         self.plot_loss()
